@@ -45,7 +45,7 @@ import * as FileSaver from 'file-saver';
 function App() {
   const [web3, setWeb3] = useState(null);
   const [mainContract, setMainContract] = useState(null);
-  const [userRoles, setUserRoles] = useState([]);
+  const [userRoles, setUserRoles] = useState();
   const [userAddress, setUserAddress] = useState('');
   const [newUserAddress, setNewUserAddress] = useState('');
   const [createUserStatus, setCreateUserStatus] = useState(null);
@@ -129,12 +129,13 @@ const handleFileUpload = async (e) => {
   }, []);
 
   // Function to get user roles
-  const getUserRoles = async () => {    
+  const getUserRoles = async () => {
     try {
       const result = await mainContract.methods.getUser(userAddress).call();
       setUserRoles(result);
       console.log(result);
     } catch (error) {
+      setUserRoles('')
       console.error('Error fetching user roles:', error);
     }
   };
@@ -226,70 +227,77 @@ const handleFileUpload = async (e) => {
 
   return (
     <div className='container p-2'>
-      <h1>Crypto Cloud</h1>
+      <h1 className='mb-4' style={{fontWeight:'bold'}}>Crypto Cloud</h1>
       <div className='container'>
-        <h2>Connected to Metamask by account {address}</h2>
+        <h3 className='mb-4' style={{fontWeight:"bold"}}>Connected to Metamask by account {address}</h3>
       </div>
       <div className='card p-3 m-3'>
         <h2 className='card-title'>Get User Attributes</h2>
-        <input type="text" placeholder="Enter user address" value={userAddress} onChange={(e) => setUserAddress(e.target.value)} />
-        <button onClick={getUserRoles}>Get Attributes</button>
-        {userRoles ? <p>User Attributes: {userRoles}</p> : <p style={{color:"red", fontWeight:"bold"}}>User not found</p>}
+        <input type="text" className='form-control mb-3' placeholder="Enter user address" value={userAddress} onChange={(e) => setUserAddress(e.target.value)} />
+        <button className='btn btn-outline-primary col-2 mb-3' onClick={getUserRoles}>Get Attributes</button>
+        {userRoles && (
+          <p style={{color:"green", fontWeight:'bold'}}>User Attributes: {userRoles}</p>
+        )}
+        {userRoles === '' && (
+          <p style={{color:"red", fontWeight:"bold"}}>User not found</p>
+        )}
       </div>
       <div className='card p-3 m-3'>
         <h2 className='card-title'>Create New User</h2>
-        <input type="text" placeholder="Enter new user address" value={newUserAddress} onChange={(e) => setNewUserAddress(e.target.value)} />
+        <input type="text" className = "form-control mb-3" placeholder="Enter new user address" value={newUserAddress} onChange={(e) => setNewUserAddress(e.target.value)} />
         <label for="roles">Choose role:</label>
-        <select name="roles" id="roles" value={selectedRole} onChange={(e) => {setSelectedRole(e.target.value)}}>
+        <select name="roles" id="roles" className = "form-select mb-3" value={selectedRole} onChange={(e) => {setSelectedRole(e.target.value)}}>
           <option value="doctor">Doctor</option>
           <option value="nurse">Nurse</option>
           <option value="patient">Patient</option>
         </select>
         <label for="department">Choose a department:</label>
-        <select name="department" id="department" value={selectedDepartment} onChange={(e) => {setSelectedDepartment(e.target.value)}}>
+        <select name="department" id="department" className = "form-select mb-3" value={selectedDepartment} onChange={(e) => {setSelectedDepartment(e.target.value)}}>
           <option value="cardiology">Cardiology</option>
           <option value="oncology">Oncology</option>
           <option value="hepatology">Hepatology</option>
           <option value="pathology">Pathology</option>
         </select>
-        <button onClick={createNewUser}>Create User</button>
+        <button className='btn btn-outline-primary col-2' onClick={createNewUser}>Create User</button>
         {createUserStatus === true && (
           <p style={{ color: "green", fontWeight: "bold" }}>New User Created successfully</p>
         )}
-        {createUserStatus === false && (
+        {createUserStatus === 'false' && (
           <p style={{ color: "red", fontWeight: "bold" }}>Error creating user</p>
         )}
       </div>
       <div className='card p-3 m-3'>
         <h2>Upload your files</h2>
         <form>
-        <label for="roles">Choose role:</label>
-        <select name="roles" id="roles" value={selectedRole} onChange={(e) => {setSelectedRole(e.target.value)}}>
+        <label className='form-label' for="roles">Choose role:</label>
+        <select name="roles" className='form-select mb-3' id="roles" value={selectedRole} onChange={(e) => {setSelectedRole(e.target.value)}}>
           <option value="doctor">Doctor</option>
           <option value="nurse">Nurse</option>
           <option value="patient">Patient</option>
         </select>
-        <select name="roles" id="roles" value={selectedModifier} onChange={(e) => {setSelectedModifier(e.target.value)}}>
+        <label className='form-label'> Choose policy: </label>
+        <select className='form-select mb-3' value={selectedModifier} onChange={(e) => {setSelectedModifier(e.target.value)}}>
           <option value="AND">AND</option>
           <option value="OR">OR</option>
         </select>
-        <label for="department">Choose a department:</label>
-        <select name="department" id="department" value={selectedDepartment} onChange={(e) => {setSelectedDepartment(e.target.value)}}>
+        <label className='form-label' for="department">Choose a department:</label>
+        <select name="department" className = 'form-select mb-3' id="department" value={selectedDepartment} onChange={(e) => {setSelectedDepartment(e.target.value)}}>
           <option value="cardiology">Cardiology</option>
           <option value="oncology">Oncology</option>
           <option value="hepatology">Hepatology</option>
           <option value="pathology">Pathology</option>
         </select>
-          <input type='file' onChange={(e) => setFile(e.target.files[0])} />
-          <button onClick={handleFileUpload}>Upload</button>
+        <label className='form-label'>Upload file:</label>
+          <input type='file'className='form-control mb-3' onChange={(e) => setFile(e.target.files[0])} />
+          <button className='btn btn-outline-primary' onClick={handleFileUpload}>Upload</button>
         </form>
-          {pinataUrl ? <p style={{color:'green',fontWeight:'bolder'}}>File successfully uploaded at: <a href = {"https://aqua-fast-hamster-823.mypinata.cloud/ipfs/" + pinataUrl} target = "_blank" rel='noreferrer'>https://aqua-fast-hamster-823.mypinata.cloud/ipfs/{pinataUrl}</a></p> : <p>{fileUploadError}</p>}
+          {pinataUrl ? <p className='mt-3' style={{color:'green',fontWeight:'bolder'}}>File successfully uploaded at: <a href = {"https://aqua-fast-hamster-823.mypinata.cloud/ipfs/" + pinataUrl} target = "_blank" rel='noreferrer'>https://aqua-fast-hamster-823.mypinata.cloud/ipfs/{pinataUrl}</a></p> : <p>{fileUploadError}</p>}
       </div>
       <div className='card p-3 m-3'>
         <h2>Download Files</h2>
         <form>
-        <input className = 'container' type="text" placeholder='Enter url' onChange={(e) => {setUrl(e.target.value)}}/>
-          <button onClick={getData}>Download</button>
+        <input className = 'form-control mb-3' type="text" placeholder='Enter url' onChange={(e) => {setUrl(e.target.value)}}/>
+          <button className='btn btn-outline-primary' onClick={getData}>Download</button>
         </form>
       </div>
     </div>
