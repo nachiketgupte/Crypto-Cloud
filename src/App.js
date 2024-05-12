@@ -5,42 +5,6 @@ import contractAbi from './MainContractAbi.json';
 import axios from "axios";
 import CryptoJS from 'crypto-js';
 import * as FileSaver from 'file-saver';
-// class App extends Component {
-//   componentDidMount() {
-//     this.loadBlockchainData();
-//   }
-//   async loadBlockchainData() {
-//     try {
-//       if (window.ethereum) {
-//         const web3 = new Web3(window.ethereum);
-//         await window.ethereum.enable();
-//         const networkId = await web3.eth.net.getId();
-//         console.log("Network ID:", networkId);
-//         const accounts = await web3.eth.getAccounts();
-//         this.setState({account:accounts[0]})
-//         console.log('Account',accounts[0]);
-//       } else {
-//         console.error("web3.js is running without provider. You need to pass a provider in order to interact with the network!");
-//       }
-//     } catch (error) {
-//       console.error("Error loading blockchain data:", error);
-//     }
-//   }
-
-//   constructor(props) {
-//     super(props);
-//     this.state = {account:''}
-//   }
-
-//   render() {
-//     return (
-//       <div className="container">
-//         <h1>Hello World</h1>
-//         <p>Your account: {this.state.account}</p>
-//       </div>
-//     );
-//   }
-// }
 
 function App() {
   const [web3, setWeb3] = useState(null);
@@ -54,17 +18,19 @@ function App() {
   const [address, setAddress] = useState('');
   const [pinataUrl, setpinataUrl] = useState('');
   const [url, setUrl] = useState('');
+  const [deleteUrl, setDeleteUrl] = useState('');
   const [selectedRole, setSelectedRole] = useState('doctor');
   const [selectedDepartment, setSelectedDepartment] = useState('cardiology');
   const [selectedModifier, setSelectedModifier] = useState('AND');
   const [policy, setPolicy] = useState('');
   const [fileUploadError, setFileUploadError] = useState('');
-  var link;
+  const [fileDeleteStatus, setFileDeleteStatus] = useState(null);
+
 
 const handleFileUpload = async (e) => {
   e.preventDefault();
+  console.time('handleFileUpload');
   const uploadPolicy = "role:" + selectedRole + " " + selectedModifier + " " + "department:" +  selectedDepartment;
-  console.log('policy: ', uploadPolicy)
   setPolicy(uploadPolicy)
     const accounts = await web3.eth.getAccounts();
     const selectedAddress = accounts[0];
@@ -77,29 +43,35 @@ const handleFileUpload = async (e) => {
     const fileData = new FormData();
     fileData.append("file", file);
     fileData.append("attributes", uploadPolicy);
-    console.log('File', fileData);
-    axios.post("http://localhost:8080/file", fileData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
+    try {
+      const result = await axios.post("http://localhost:8080/file", fileData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      let link = result.data.url;
+      let hsh = result.data.hash;
+      setHash(hsh);
+      const accounts = await web3.eth.getAccounts();
+      const selectedAddress = accounts[0];
+      const id = link;
+      console.log(id);
+      // Check if MetaMask is connected
+      if (!selectedAddress) {
+      console.error('No MetaMask account connected');
+      return;
       }
-    }).then((response)=> {
-      const receivedHash = response.data.hash;
-      link = response.data.url;
-      setHash(receivedHash.toString())
-      // setpinataUrl(link)
-      console.log(link);
-    }).then(()=> {
-      uploadData().catch((error) => {
-        console.log(error);
-      }).then(() => {
+      try {
+        await mainContract.methods.uploadData(hsh, uploadPolicy, link).send({ from: selectedAddress, gas: 3000000, gasPrice: '1000000000' });
         setpinataUrl(link);
-        setFileUploadError(null)
-      })
-      console.log('File uploaded successfully, file hash: ', hash);
-    })
-    .catch((error) => {
+        setFileUploadError(null);
+      } catch (error) {
+        console.log('Error uploading data', error);
+      }
+    } catch (error) {
       console.log(error);
-    })
+    }
+    console.timeEnd('handleFileUpload');
   }
 
   useEffect(() => {
@@ -115,7 +87,7 @@ const handleFileUpload = async (e) => {
           await window.ethereum.request({method:'eth_requestAccounts'})
           const accounts = await web3Instance.eth.getAccounts();
           setAddress(accounts[0]);
-          const contractAddress = '0x859Fe7426B2E570c921Eb56aCC4136c3FDEB3A07';
+          const contractAddress = '0xcB222df2657DE2A9747E0D0F3470cAD54a89A537';
           const contract = new web3Instance.eth.Contract(contractAbi, contractAddress);
           setMainContract(contract)
         } catch (error) {
@@ -165,29 +137,25 @@ const handleFileUpload = async (e) => {
     }
   };
 
-  const uploadData = async () => {
-    const accounts = await web3.eth.getAccounts();
-    const selectedAddress = accounts[0];
-    const id = link
-    console.log("ID: ", id);
-     // Check if MetaMask is connected
-    if (!selectedAddress) {
-      console.error('No MetaMask account connected');
-      return;
-    }
-    try {
-      await mainContract.methods.uploadData(hash, policy, id).send({ from: selectedAddress, gas: 3000000, gasPrice: '1000000000' });
-      console.log('Data successfully uploaded to blockchain by ', selectedAddress);
-    } catch (error) {
-      console.log('Error uploading data', error);
-    }
-  }
+  // const uploadData = async () => {
+  //   const accounts = await web3.eth.getAccounts();
+  //   const selectedAddress = accounts[0];
+  //   const id = link;
+  //   console.log(id);
+  //    // Check if MetaMask is connected
+  //   if (!selectedAddress) {
+  //     console.error('No MetaMask account connected');
+  //     return;
+  //   }
+  //   try {
+  //     await mainContract.methods.uploadData(hash, policy, link).send({ from: selectedAddress, gas: 3000000, gasPrice: '1000000000' });
+  //   } catch (error) {
+  //     console.log('Error uploading data', error);
+  //   }
+  // }
 
   const getData = async (e) => {
     e.preventDefault();
-    const parts = url.split("/");
-    const hash = parts[parts.length - 1];
-    const id = hash;
     let userRoles;
     try {
       const result = await mainContract.methods.getUser(address).call();
@@ -195,34 +163,114 @@ const handleFileUpload = async (e) => {
     } catch (error) {
       console.error('Error fetching user roles:', error);
     }
-    console.log(userRoles);
-    // mainContract.methods.getUser(userAddress).call();
-    mainContract.methods.getData(id).call()
-    .then((response) => {
+    try {
+      const response = await mainContract.methods.getData(url).call()
       console.log('The result is: ', response);
-      const policy = response.policy;
-      const fileUrl = 'https://aqua-fast-hamster-823.mypinata.cloud/ipfs/' + id;
+      const newFileUrl = response.url;
+      const fileUrl = 'https://aqua-fast-hamster-823.mypinata.cloud/ipfs/' + newFileUrl;
+      console.log(fileUrl);
+      if(address.toLocaleLowerCase() === response.owner.toLocaleLowerCase()) {
+        userRoles = response.policy;
+      }
       const formData = new FormData();
       formData.append('url', fileUrl);
       formData.append('attributes', userRoles);
-      axios.post("http://localhost:8080/fetch", formData, {
-        headers: {
-        'Content-Type': 'multipart/form-data',
-        },
-        responseType: 'blob'
-      })
-      .then((response) => {
-        console.log(response);
-        const blob = new Blob([response.data]);
-        FileSaver.saveAs(blob, 'downloaded_file.png');
-      })
-      .catch((error) => {
-        console.log('error');
-      })
-      })
-      .catch((error) => {
+      console.log('User Roles:', userRoles);
+      try {
+        const result = await axios.post("http://localhost:8080/fetch", formData, {
+          headers: {
+          'Content-Type': 'multipart/form-data',
+          },
+          responseType: 'blob'
+        })
+        console.log(result.data);
+        const blob = new Blob([result.data]);
+        FileSaver.saveAs(blob, 'downloaded_file.pdf');
+        
+      } catch (error) {
         console.log(error);
-      })
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  const deleteFile = async (e) => {
+    e.preventDefault();
+    const result = await mainContract.methods.getData(deleteUrl).call();
+    console.log(result);
+    const fileData = new FormData();
+    fileData.append("url", result.url);
+    try {
+      await mainContract.methods.deleteFile(deleteUrl).send({ from: address, gas: 3000000, gasPrice: '1000000000' });
+      const response = await axios.post("http://localhost:8080/delete", fileData, {
+          headers: {
+              'Content-Type': 'multipart/form-data'
+          }
+      });
+      setFileDeleteStatus(true);
+  } catch (error) {
+      console.log('Error deleting file ', error);
+      setFileDeleteStatus(false);
+  }
+  }
+
+  const modifyPolicy = async (e) => {
+    e.preventDefault();
+    let fileUrl;
+    let userRoles;
+    let newUrl;
+    let owner;
+
+    // 1. Fetch URL
+    try {
+      const result = await mainContract.methods.getData(url).call();
+      fileUrl = "https://aqua-fast-hamster-823.mypinata.cloud/ipfs/" + result.url;
+      owner = result.owner;
+      console.log('File link: ', fileUrl);
+      // console.log('Owner:', owner + " " + address);
+      if(address.toLocaleLowerCase() === owner.toLocaleLowerCase()) {
+        userRoles = result.policy;
+      } else {
+        console.log('Only owner can modify policy');
+        return;
+      }
+      console.log('Url: ', fileUrl);
+    } catch (error) {
+      console.log(error);
+    }
+    // 3. Call API
+    const newPolicy = "role:" + selectedRole + " " + selectedModifier + " " + "department:" +  selectedDepartment;
+    const fileData = new FormData();
+    fileData.append("url", fileUrl);
+    fileData.append("attributes", userRoles);
+    fileData.append("policy", newPolicy);
+    try {
+      const result = await axios.post("http://localhost:8080/modify", fileData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      newUrl = result.data.url;
+      console.log(newUrl);
+    } catch (error) {
+      console.log(error);
+    }
+
+    // 4. Change URL in blockchain
+    try {
+      const result = await mainContract.methods.modifyPolicy(newPolicy, url, newUrl).send({ from: address, gas: 3000000, gasPrice: '1000000000' });
+    } catch (error) {
+      console.log(error);
+    }
+
+    // 5. Verify
+    try {
+      const result = await mainContract.methods.getData(url).call();
+      console.log(result);
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   return (
@@ -262,7 +310,7 @@ const handleFileUpload = async (e) => {
         {createUserStatus === true && (
           <p style={{ color: "green", fontWeight: "bold" }}>New User Created successfully</p>
         )}
-        {createUserStatus === 'false' && (
+        {createUserStatus === false && (
           <p style={{ color: "red", fontWeight: "bold" }}>Error creating user</p>
         )}
       </div>
@@ -291,13 +339,51 @@ const handleFileUpload = async (e) => {
           <input type='file'className='form-control mb-3' onChange={(e) => setFile(e.target.files[0])} />
           <button className='btn btn-outline-primary' onClick={handleFileUpload}>Upload</button>
         </form>
-          {pinataUrl ? <p className='mt-3' style={{color:'green',fontWeight:'bolder'}}>File successfully uploaded at: <a href = {"https://aqua-fast-hamster-823.mypinata.cloud/ipfs/" + pinataUrl} target = "_blank" rel='noreferrer'>https://aqua-fast-hamster-823.mypinata.cloud/ipfs/{pinataUrl}</a></p> : <p>{fileUploadError}</p>}
+          {pinataUrl ? <p className='mt-3' style={{color:'green',fontWeight:'bolder'}}>File successfully uploaded at: <a href = {"https://aqua-fast-hamster-823.mypinata.cloud/ipfs/" + pinataUrl} target = "_blank" rel='noreferrer'>https://aqua-fast-hamster-823.mypinata.cloud/ipfs/{pinataUrl}</a> , File ID: {hash}</p> : <p>{fileUploadError}</p>}
       </div>
       <div className='card p-3 m-3'>
         <h2>Download Files</h2>
         <form>
         <input className = 'form-control mb-3' type="text" placeholder='Enter url' onChange={(e) => {setUrl(e.target.value)}}/>
           <button className='btn btn-outline-primary' onClick={getData}>Download</button>
+        </form>
+      </div>
+      <div className='card p-3 m-3'>
+        <h2>Delete File</h2>
+        <form>
+        <input className = 'form-control mb-3' type="text" placeholder='Enter url' onChange={(e) => {setDeleteUrl(e.target.value)}}/>
+          <button className='btn btn-outline-primary' onClick={deleteFile}>Delete</button>
+        </form>
+        {fileDeleteStatus === true && (
+          <p style={{ color: "green", fontWeight: "bold" }}>File deleted successfully</p>
+        )}
+        {fileDeleteStatus === false && (
+          <p style={{ color: "red", fontWeight: "bold" }}>Error deleting file</p>
+        )}
+      </div>
+      <div className='card p-3 m-3'>
+        <h2>Modify Access Policy</h2>
+        <form>
+        <select name="roles" className='form-select mb-3' id="roles" value={selectedRole} onChange={(e) => {setSelectedRole(e.target.value)}}>
+          <option value="doctor">Doctor</option>
+          <option value="nurse">Nurse</option>
+          <option value="patient">Patient</option>
+        </select>
+        <label className='form-label'> Choose policy: </label>
+        <select className='form-select mb-3' value={selectedModifier} onChange={(e) => {setSelectedModifier(e.target.value)}}>
+          <option value="AND">AND</option>
+          <option value="OR">OR</option>
+        </select>
+        <label className='form-label' for="department">Choose a department:</label>
+        <select name="department" className = 'form-select mb-3' id="department" value={selectedDepartment} onChange={(e) => {setSelectedDepartment(e.target.value)}}>
+          <option value="cardiology">Cardiology</option>
+          <option value="oncology">Oncology</option>
+          <option value="hepatology">Hepatology</option>
+          <option value="pathology">Pathology</option>
+        </select>
+        <label className='form-label'>Enter resource ID: </label>
+        <input className = 'form-control mb-3' type="text" placeholder='Enter ID' onChange={(e) => {setUrl(e.target.value)}}/>
+          <button className='btn btn-outline-primary' onClick={modifyPolicy}>Modify</button>
         </form>
       </div>
     </div>

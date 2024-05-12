@@ -24,6 +24,7 @@ contract Main {
         string hash;
         address owner;
         string policy;
+        string url;
     }
 
     mapping (string => Data) fetchData;
@@ -42,9 +43,9 @@ contract Main {
         return findUser[_user].roles;
     }
 
-    function uploadData(string memory _hash, string memory _policy, string memory _id) public {
+    function uploadData(string memory _hash, string memory _policy, string memory _url) public {
         require(checkUsereExists[msg.sender], "User is not registered");
-        fetchData[_id] = Data(_hash, msg.sender, _policy);
+        fetchData[_hash] = Data(_hash, msg.sender, _policy, _url);
         emit DataUploaded(msg.sender, _hash, _policy);
     }
 
@@ -54,5 +55,15 @@ contract Main {
 
     function doesUserExist(address _user) public view returns (bool) {
         return checkUsereExists[_user];
+    }
+
+    function modifyPolicy(string memory _newPolicy, string memory _hash, string memory _url) public {
+        require(fetchData[_hash].owner == msg.sender, "Only data owner can modify the access policy");
+        fetchData[_hash] = Data(_hash, msg.sender, _newPolicy, _url);
+    }
+
+    function deleteFile(string memory _hash) public {
+        require(fetchData[_hash].owner == msg.sender, "Only owner can delete the data");
+        delete fetchData[_hash];
     }
 }

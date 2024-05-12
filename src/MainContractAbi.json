@@ -114,7 +114,7 @@
       },
       {
         "internalType": "string",
-        "name": "_id",
+        "name": "_url",
         "type": "string"
       }
     ],
@@ -149,6 +149,11 @@
             "internalType": "string",
             "name": "policy",
             "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "url",
+            "type": "string"
           }
         ],
         "internalType": "struct Main.Data",
@@ -179,5 +184,41 @@
     "stateMutability": "view",
     "type": "function",
     "constant": true
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_newPolicy",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_hash",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_url",
+        "type": "string"
+      }
+    ],
+    "name": "modifyPolicy",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_hash",
+        "type": "string"
+      }
+    ],
+    "name": "deleteFile",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   }
 ]
