@@ -1,70 +1,131 @@
-# Getting Started with Create React App
+# Decentralized File Storage and Access Control System
+This project is a decentralized application (dApp) for secure file storage, encryption, and access control using Ethereum, Attribute-Based Encryption (ABE), and Pinata IPFS. The system enables users to upload, modify, and delete files with fine-grained access policies. It also provides encryption and decryption mechanisms for data confidentiality using FAME (Functional Attribute-Based Encryption).
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Table of Contents
+Features
+Tech Stack
+Prerequisites
+Setup
+Usage
+Smart Contract Details
+Server-Side Implementation
+React Front-End Features
+Future Enhancements
+Features
+Decentralized File Storage: Uses IPFS (via Pinata) to store files securely and generate unique content hashes.
+Attribute-Based Encryption: Ensures access control by encrypting files with policies like role:doctor AND department:oncology.
+Smart Contract Integration: Tracks user roles, data ownership, and policies on the Ethereum blockchain.
+Access Management: Allows file owners to modify access policies or delete files securely.
+End-to-End Encryption: Encrypts sensitive data before uploading and decrypts it for authorized users only.
+Tech Stack
+Smart Contract: Solidity (deployed on Ethereum)
+Frontend: React.js with Web3.js
+Backend: Go (Golang) with Gin Framework
+Storage: Pinata IPFS
+Encryption: Attribute-Based Encryption using gofe library
+Prerequisites
+Node.js (>= 14.x)
+Go (Golang) (>= 1.19)
+Ganache or Ethereum Testnet (e.g., Sepolia, Rinkeby)
+MetaMask extension installed in the browser
+Pinata account with API keys
+Docker (optional, for containerization)
+Setup
+Backend
+Clone the repository:
 
-## Available Scripts
+bash
+Copy
+Edit
+git clone https://github.com/your-repo-url.git  
+cd decentralized-file-storage  
+Install dependencies:
 
-In the project directory, you can run:
+bash
+Copy
+Edit
+go mod tidy  
+Configure environment variables in backend/main.go:
 
-### `npm start`
+Replace Pinata_api_key and Pinata_secret_api_key with your Pinata API credentials.
+Run the server:
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+bash
+Copy
+Edit
+go run main.go  
+Smart Contract
+Install Truffle or Hardhat for contract deployment.
+Deploy the contract:
+bash
+Copy
+Edit
+npx hardhat run scripts/deploy.js --network sepolia  
+Update the deployed contract address in the frontend and backend configurations.
+Frontend
+Navigate to the frontend folder:
+bash
+Copy
+Edit
+cd frontend  
+Install dependencies:
+bash
+Copy
+Edit
+npm install  
+Start the development server:
+bash
+Copy
+Edit
+npm start  
+Usage
+Connect to MetaMask and select the correct Ethereum network.
+Register users with appropriate roles using the Admin Panel.
+Upload files with access policies using the File Upload feature.
+Modify access policies, fetch, or delete files as needed.
+Smart Contract Details
+Functions:
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+createNewUser: Registers a new user with specific roles.
+uploadData: Stores file metadata and access policies on the blockchain.
+modifyPolicy: Allows owners to update file access policies.
+deleteFile: Deletes file metadata from the blockchain.
+Events:
 
-### `npm test`
+UserCreated: Logs when a new user is registered.
+DataUploaded: Logs when a file is uploaded.
+Server-Side Implementation
+Key Functionalities
+Encryption:
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Uses FAME (Functional Attribute-Based Encryption) to encrypt files based on policies.
+Pinata Integration:
 
-### `npm run build`
+Uploads and retrieves files from IPFS via Pinata APIs.
+Decryption:
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Decrypts files for authorized users based on their attributes.
+APIs:
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+/encrypt: Encrypts a message based on user roles.
+/file: Encrypts and uploads a file to IPFS.
+/fetch: Downloads and decrypts a file.
+/modify: Modifies file access policies.
+React Front-End Features
+MetaMask Integration:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Connects MetaMask for user authentication and transactions.
+File Upload & Management:
 
-### `npm run eject`
+Handles file uploads, modifications, and deletions with the backend and blockchain.
+User-Friendly UI:
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+Displays user roles and file details with easy-to-use forms.
+Real-Time Updates:
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Reacts to MetaMask account changes dynamically.
+Future Enhancements
+Role-Based Dashboards: Create distinct interfaces for admins and regular users.
+Audit Logs: Track file access and modifications.
+Layer-2 Scaling: Reduce gas costs using Polygon or Optimism.
+Mobile-Friendly UI: Enhance accessibility for mobile users.
